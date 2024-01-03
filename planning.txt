@@ -1,0 +1,91 @@
+Spec:
+- command line
+- 12 turns
+- Human codebreaker vs computer code setter
+- First build with:
+    - Computer randomly selects
+    - Human player guesses
+    - Computer gives feedback
+- Second, refactor:
+    - Human player chooses to be codebreaker or code setter.
+    - Computer can guess colors following its own strategy.
+
+Planning:
+    Colors
+        🔴 1 RED 
+        🟢 2 GREEN
+        🔵 3 BLUE
+        ⚪ 4 WHITE
+        🟤 5 BROWN
+        🟣 6 PURPLE 
+        ➖ Blank
+    Success Indicators
+        🔳 Black (correct color and position)
+        🔲 White (correct color, wrong position)
+        ➖ Blank
+
+Board:
+...........................
+ROUNDS: 4       AVG:    6.4
+TOTAL:  25      BEST:   5
+
+               +----------+
+               |❔ ❔ ❔ ❔|
+    +----------+----------+
+ 12 |          |          |
+    +----------+----------+
+ 11 |          |          |
+    +----------+----------+
+ 10 |          |          |
+    +----------+----------+
+ 9  |          |          |
+    +----------+----------+
+ 8  |          |          |
+    +----------+----------+
+ 7  |          |          |
+    +----------+----------+
+ 6  |          |          |
+    +----------+----------+
+ 5  |          |          |
+    +----------+----------+
+ 4  |          |          |
+    +----------+----------+
+ 3  |          |          |
+    +----------+----------+
+ 2  |          |          |
+    +----------+----------+
+ 1  |🔳🔳🔲➖|🟢🟢🟢🟢|
+    +----------+----------+
+
+🔴 1 RED    🔵 3 BLUE   🟤 5 BROWN
+🟢 2 GREEN  ⚪ 4 WHITE  🟣 6 PURPLE 
+
+>> 
+
+    --'exit' to quit--
+..........................
+
+PSEUDOCODE (human player vs. computer)
+Init random computer sequence of 4 colours
+Init empty board (2D array 12 * 8)
+While playing:
+    12 times:
+        Display stats
+        Display board
+        Prompt for input (they input using numbers).
+            Quit if 'exit'
+        Check player input against correct sequence
+        If correct
+            Player wins
+                Update stats to reflect win
+                Update board to reflect win
+                Display new stats
+                Display winning board (reveal combination)
+                Prompt for new game
+        Else
+            Calculate feedback (black and white pegs)
+            Update board for this turn.
+    End loop
+    Computer wins
+        Update stats
+End loop

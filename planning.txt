@@ -65,6 +65,8 @@ TOTAL:  25      BEST:   5
     --'exit' to quit--
 ..........................
 
+
+
 PSEUDOCODE (human player vs. computer)
 Init random computer sequence of 4 colours
 Init empty board (2D array 12 * 8)
@@ -89,3 +91,28 @@ While playing:
     Computer wins
         Update stats
 End loop
+
+
+Objects / Methods required:
+
+Game
+   d
+   
+GameBoard
+   @state
+   def init_board
+   def update_board
+   def analyze_move
+
+ScoreBoard
+   @round
+   @average_score
+   @total_score
+   @best_score
+   def display_stats
+   def update_stats
+Player
+CodeSetter < Player
+   def set_code
+   
+CodeBreaker < Player

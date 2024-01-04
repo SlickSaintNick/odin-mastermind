@@ -29,36 +29,25 @@ Board:
 ROUNDS: 4       AVG:    6.4
 TOTAL:  25      BEST:   5
 
-               +----------+
-               |❔ ❔ ❔ ❔|
+                  +----------
+                  |❔ ❔ ❔ ❔
+                  +----------
+     12           |          
+     11           |          
+     10           |          
+     9            |          
+     8            |          
+     7            |          
+     6            |          
+     5            |          
+     4            |          
+     3            |          
+     2            |          
+     1  🔳🔳🔲➖|🟢🟢🟢🟢
     +----------+----------+
- 12 |          |          |
-    +----------+----------+
- 11 |          |          |
-    +----------+----------+
- 10 |          |          |
-    +----------+----------+
- 9  |          |          |
-    +----------+----------+
- 8  |          |          |
-    +----------+----------+
- 7  |          |          |
-    +----------+----------+
- 6  |          |          |
-    +----------+----------+
- 5  |          |          |
-    +----------+----------+
- 4  |          |          |
-    +----------+----------+
- 3  |          |          |
-    +----------+----------+
- 2  |          |          |
-    +----------+----------+
- 1  |🔳🔳🔲➖|🟢🟢🟢🟢|
-    +----------+----------+
-
-🔴 1 RED    🔵 3 BLUE   🟤 5 BROWN
-🟢 2 GREEN  ⚪ 4 WHITE  🟣 6 PURPLE 
+    
+🔴 RED    🔵 BLUE   🟤 BROWN
+🟢 GREEN  ⚪ WHITE  🟣 PURPLE 
 
 >> 
 
@@ -96,8 +85,12 @@ End loop
 Objects / Methods required:
 
 Game
-   d
-   
+   def play_game
+   (Holds the other objects inside itself?)
+      scoreboard
+      board
+      players
+
 GameBoard
    @state
    def init_board
@@ -111,8 +104,21 @@ ScoreBoard
    @best_score
    def display_stats
    def update_stats
+
 Player
+
 CodeSetter < Player
+   @code
    def set_code
+   def check_code
+   def feedback_code
    
 CodeBreaker < Player
+
+
+Goals:
+- Working for a single round
+   - Choose a 4-color pattern
+   - Display game board
+   - Player guess
+   - Feedback on player guess

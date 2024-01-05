@@ -25,8 +25,7 @@ FEEDBACK_PIECES = [
 ].freeze
 
 class GameBoard
-  # Remember the state of the board and display it.
-  # Update the board, and give feeback on the move.
+  # Remember the state of the board, update it, and display it.
   @board_guess = Array.new(TURNS) { Array.new(POSITIONS, 0) }
   @board_feedback = Array.new(TURNS) { Array.new(POSITIONS, 0) }
 
@@ -34,10 +33,10 @@ class GameBoard
     # Print the code box
     print '              '
     if reveal_code
-      POSITIONS.times { |i| print GUESS_PIECES[code[i]][0] }
+      POSITIONS.times { |i| print "#{GUESS_PIECES[code[i]][0]} " }
       print "\n\n"
     else
-      print "❔❔❔❔\n\n"
+      print "❔ ❔ ❔ ❔\n\n"
     end
     # Print the rows
     TURNS.times do |i|
@@ -53,6 +52,7 @@ class GameBoard
       print '|'
       POSITIONS.times do |j|
         print GUESS_PIECES[@board_guess[i][j]][0]
+        print ' '
       end
       print "\n"
     end
@@ -76,14 +76,18 @@ class GameBoard
     @board_guess.replace(Array.new(TURNS) { Array.new(POSITIONS, 0) })
     @board_feedback.replace(Array.new(TURNS) { Array.new(POSITIONS, 0) })
   end
-
 end
 
 class ScoreBoard
-  def self.display_stats
-    Gem.win_platform? ? (system 'cls') : (system 'clear')
-    # TODO add the stats and the display method.
+  # Remember and update the game statistics, display them.
+  @rounds = 0
+  @total_score = 0
+  @best_score = 0
 
+  def self.display_stats
+    puts "ROUNDS:\t#{@rounds}\tAVG:\t#{
+      (@total_score.to_f / @rounds).round(1) unless @rounds.zero?}"
+    puts "TOTAL:\t#{@total_score}\tBEST:\t#{@best_score}\n\n\n"
   end
 
   def self.update_stats(turns)
@@ -143,6 +147,7 @@ class CodeSetter < Player
 end
 
 class CodeBreaker < Player
+  # Guess the code
   # Build a regex expression to test valid input.
   @guess_validation_re = '['
   GUESS_PIECES.each { |piece| @guess_validation_re += piece[1] }
@@ -167,10 +172,12 @@ class CodeBreaker < Player
 end
 
 class Game
+  # Control the flow of the game, determine the result.
   def self.play_game
     code = CodeSetter.set_code
     TURNS.times do |i|
       turn = i
+      display_title
       ScoreBoard.display_stats
       GameBoard.display_board(true, code)
       guess = convert_code(CodeBreaker.guess)
@@ -194,6 +201,7 @@ class Game
 
   def self.game_won(turns, code)
     # ScoreBoard.update_stats(turns)
+    display_title
     ScoreBoard.display_stats
     GameBoard.display_board(true, code)
     puts "\nCorrect guess!"
@@ -205,6 +213,12 @@ class Game
     puts "Press Enter to play again or type 'exit' to quit."
     true unless gets.chomp.upcase.strip == 'EXIT'
   end
+
+  def self.display_title
+    Gem.win_platform? ? (system 'cls') : (system 'clear')
+    puts "MASTERMIND\n\n"
+  end
+
 end
 
 loop do

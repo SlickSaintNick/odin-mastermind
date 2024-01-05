@@ -81,17 +81,22 @@ end
 class ScoreBoard
   # Remember and update the game statistics, display them.
   @rounds = 0
+  @correct = 0
   @total_score = 0
-  @best_score = 0
+  @best_score = TURNS + 1
 
   def self.display_stats
-    puts "ROUNDS:\t#{@rounds}\tAVG:\t#{
-      (@total_score.to_f / @rounds).round(1) unless @rounds.zero?}"
-    puts "TOTAL:\t#{@total_score}\tBEST:\t#{@best_score}\n\n\n"
+    puts "ROUNDS:\t#{@rounds}\tCORRECT:\t#{@correct}"
+    puts "TOTAL:\t#{@total_score}\tBEST:\t\t#{
+      @best_score if @best_score <= TURNS
+    }\n\n\n"
   end
 
-  def self.update_stats(turns)
-    # TODO add the update stats method.
+  def self.update_stats(turn, correct_guess)
+    @rounds += 1
+    @correct += 1 if correct_guess
+    @total_score += turn
+    @best_score = turn if correct_guess && turn < @best_score
   end
 end
 
@@ -179,17 +184,16 @@ class Game
       turn = i
       display_title
       ScoreBoard.display_stats
-      GameBoard.display_board(true, code)
+      GameBoard.display_board
       guess = convert_code(CodeBreaker.guess)
       feedback = CodeSetter.check_code(guess)
       GameBoard.update_board(turn, guess, feedback)
       if feedback.uniq == [2]
-        game_won(i + 1, code)
+        game_over(i + 1, code, true)
         return 'CodeSetter'
       end
     end
-    puts 'Out of turns!'
-    Kernel.exit unless play_again?
+    game_over(TURNS + 1, code, false)
     'CodeBreaker'
     # TODO on the last turn, display the board and end of game message.
   end
@@ -199,12 +203,16 @@ class Game
     str.split('').map { |c| GUESS_PIECES.find_index { |piece| piece[1] == c } }
   end
 
-  def self.game_won(turns, code)
-    # ScoreBoard.update_stats(turns)
+  def self.game_over(turn, code, correct_guess)
+    ScoreBoard.update_stats(turn, correct_guess)
     display_title
     ScoreBoard.display_stats
     GameBoard.display_board(true, code)
-    puts "\nCorrect guess!"
+    if correct_guess
+      puts "\nCorrect guess!"
+    else
+      puts "\nOut of turns."
+    end
     Kernel.exit unless play_again?
   end
 

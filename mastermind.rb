@@ -123,12 +123,12 @@ class CodeSetter
     @code
   end
 
-  def check_code(guess)
+  def check_code(guess, code=@code)
     # Check the guess against the code and provide feedback. Feedback in the form of a sorted
     # array referencing FEEDBACK_PIECES, E.g. 1 correct, 2 right colour, 1 incorrect would be:
     # [2, 1, 1, 0]. I.e. if all are [2], game is won.
     guess_copy = guess[0..(guess.length - 1)]
-    code_copy = @code[0..(@code.length - 1)]
+    code_copy = code[0..(@code.length - 1)]
     feedback = []
     # Check for correct colour and position (feedback = 2)
     code_copy.each_with_index do |_, i|
@@ -155,7 +155,7 @@ class CodeSetter
   end
 end
 
-class CodeBreaker
+class CodeBreakerHuman
   # Guess the code
 
   def initialize
@@ -165,27 +165,92 @@ class CodeBreaker
     @guess_validation_re += "]{#{POSITIONS}}"
   end
 
-  def guess
+  def guess(turn, game_board, code_setter)
     # Get user input
     loop do
-      print "\n>> "
+      print "\nTurn #{turn + 1} >> "
       guess = gets.chomp.upcase.strip
       Kernel.exit if guess == 'EXIT'
-      return guess if guess.slice(0, POSITIONS).match(@guess_validation_re)
+      return convert_code(guess) if guess.slice(0, POSITIONS).match(@guess_validation_re)
 
       print "Type your guesses as #{POSITIONS} letters where each letter is the first letter of a color."
     end
+  end
+
+  def convert_code(str)
+    # Converts a letter code of pieces to array of indexes e.g. "RGBR" -> [1, 2, 3, 1]
+    str.split('').map { |c| GUESS_PIECES.find_index { |piece| piece[1] == c } }
+  end
+end
+
+class CodeBreakerComputer
+  def guess(turn, game_board, code_setter)
+    return first_guess if turn.zero?
+    puts "Previous guesses and feedback"
+    (12 - turn..11).each do |row|
+      print "Row #{12 - row}  "
+      print "Guess #{game_board.board_guess[row]}  "
+      print "Feedback #{game_board.board_feedback[row]}\n"
+    end
+
+    # Generate an array of all possible guesses where the current board state would allow that guess.
+    possible_guess = []
+
+    (1..6).each do |pos1|
+      (1..6).each do |pos2|
+        (1..6).each do |pos3|
+          (1..6).each do |pos4|
+            # Here we have a code generated. Check if it is viable.
+            this_code = [pos1, pos2, pos3, pos4]
+            possible_guess.push(this_code) if code_viable?(this_code, turn, game_board, code_setter)
+          end
+        end
+      end
+    end
+    # We now have a list of all possible guesses. Return a random one.
+    puts "First 20 possible guesses:"
+    p possible_guess.slice(0, 20)
+    print 'Press Enter for computer guess >>'
+    gets
+    possible_guess.sample
+  end
+
+  def first_guess
+    guess = []
+    POSITIONS.times do
+      guess.push((rand * (GUESS_PIECES.length - 1)).floor + 1)
+    end
+    print 'Press Enter for computer guess >>'
+    gets
+    guess
+  end
+
+  def code_viable?(this_code, turn, game_board, code_setter)
+    (12 - turn..11).each do |row|
+      row_feedback = game_board.board_feedback[row]
+      row_guess = game_board.board_guess[row]
+      # Logic here:
+      # We have a possible code (this_code).
+      # If it were the actual code, would it have led to the feedback on this row, given the guess on this row?
+      # If not, it is not viable.
+      return false if code_setter.check_code(row_guess, this_code) != row_feedback
+    end
+    true
   end
 end
 
 class Game
   # Control the flow of the game, determine the result.
 
-  def initialize
+  def initialize(code_breaker = 'human')
     @game_board = GameBoard.new
     @score_board = ScoreBoard.new
     @code_setter = CodeSetter.new
-    @code_breaker = CodeBreaker.new
+    if code_breaker == 'human'
+      @code_breaker = CodeBreakerHuman.new
+    elsif code_breaker == 'computer'
+      @code_breaker = CodeBreakerComputer.new
+    end
   end
 
   def play_game
@@ -193,7 +258,7 @@ class Game
 
     TURNS.times do |turn|
       refresh_display
-      guess = convert_code(@code_breaker.guess)
+      guess = @code_breaker.guess(turn, @game_board, @code_setter)
       feedback = @code_setter.check_code(guess)
       @game_board.update_board(turn, guess, feedback)
 
@@ -209,20 +274,15 @@ class Game
     'CodeBreaker'
   end
 
-  def refresh_display(reveal_code: true) # TODO change back to false after debugging
+  def refresh_display(reveal_code=false)
     display_title
     @score_board.display_stats
     @game_board.display_board(reveal_code, @code_setter.code)
   end
 
-  def convert_code(str)
-    # Converts a letter code of pieces to array of indexes e.g. "RGBR" -> [1, 2, 3, 1]
-    str.split('').map { |c| GUESS_PIECES.find_index { |piece| piece[1] == c } }
-  end
-
   def game_over(turns, correct_guess)
     @score_board.update_stats(turns, correct_guess)
-    refresh_display
+    refresh_display(true)
     if correct_guess
       puts "\nCorrect guess!"
     else
@@ -243,7 +303,11 @@ class Game
   end
 end
 
-game = Game.new
+puts 'Human - Human Code Breaker'
+puts 'Computer - Computer Code Breaker'
+code_breaker = gets.chomp.downcase
+
+game = Game.new(code_breaker)
 
 loop do
   game.play_game

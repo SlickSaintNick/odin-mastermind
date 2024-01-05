@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Initialize the length and complexity of the game.
 # Game pieces have a print value, an index in the array which corresponds
 # to the game state arrays, and a letter value.
@@ -8,35 +10,30 @@
 TURNS = 12
 POSITIONS = 4
 GUESS_PIECES = [
-  ['', ''],     # 0
-  ['🔴', 'R'],  # 1
-  ['🟢', 'G'],  # 2
-  ['🔵', 'B'],  # 3
-  ['⚪', 'W'],  # 4
-  ['🟡', 'Y'],  # 5
-  ['🟣', 'P']   # 6
-]
+  ['', ''], # 0
+  ['🔴', 'R'], # 1
+  ['🟢', 'G'], # 2
+  ['🔵', 'B'], # 3
+  ['⚪', 'W'], # 4
+  ['🟡', 'Y'], # 5
+  ['🟣', 'P']  # 6
+].freeze
 FEEDBACK_PIECES = [
   ['➖', '-'],  # 0 - blank
   ['🔲', 'O'],  # 1 - correct color, wrong position
   ['🔳', 'X']   # 2 - correct color and position
-]
-
-# Build a regex expression to test valid input.
-$guess_validation_re = '['
-GUESS_PIECES.each { |piece| $guess_validation_re += piece[1] }
-$guess_validation_re += "]{#{POSITIONS}}"
+].freeze
 
 class GameBoard
   # Remember the state of the board and display it.
   # Update the board, and give feeback on the move.
-  @state_guess = Array.new(TURNS) { Array.new(POSITIONS, 0) }
-  @state_feedback = Array.new(TURNS) { Array.new(POSITIONS, 0) }
+  @board_guess = Array.new(TURNS) { Array.new(POSITIONS, 0) }
+  @board_feedback = Array.new(TURNS) { Array.new(POSITIONS, 0) }
 
   def self.display_board
     # Print the code placeholder
-    print '                '
-    print "❔ ❔ ❔ ❔\n\n"
+    print '              '
+    print "❔❔❔❔\n\n"
     # Print the rows
     TURNS.times do |i|
       if 11 - i < 9
@@ -46,11 +43,11 @@ class GameBoard
       end
       print "#{TURNS - i} "
       POSITIONS.times do |j|
-        print FEEDBACK_PIECES[@state_feedback[i][j]][0]
+        print FEEDBACK_PIECES[@board_feedback[i][j]][0]
       end
       print '|'
       POSITIONS.times do |j|
-        print GUESS_PIECES[@state_guess[i][j]][0]
+        print GUESS_PIECES[@board_guess[i][j]][0]
       end
       print "\n"
     end
@@ -59,12 +56,16 @@ class GameBoard
     puts '🟢 GREEN  ⚪ WHITE  🟣 PURPLE'
   end
 
-  def self.update_board(round, guess, feedback)
-    #
-    #
+  def self.update_board(turn, guess, feedback)
+    # Add the guesses to the array
+    guess.each_with_index do |number, i|
+      @board_guess[11 - turn][i] = number
+    end
+    # Add the feedback to the arrau
+    feedback.each_with_index do |number, i|
+      @board_feedback[11 - turn][i] = number
+    end
   end
-
-
 end
 
 class ScoreBoard
@@ -121,6 +122,11 @@ class CodeSetter < Player
 end
 
 class CodeBreaker < Player
+  # Build a regex expression to test valid input.
+  @guess_validation_re = '['
+  GUESS_PIECES.each { |piece| @guess_validation_re += piece[1] }
+  @guess_validation_re += "]{#{POSITIONS}}"
+
   def self.guess
     # Get user input
     keep_going = true
@@ -129,7 +135,7 @@ class CodeBreaker < Player
       guess = gets.chomp.upcase.strip
       Kernel.exit if guess == 'EXIT'
       guess = guess.slice(0, POSITIONS)
-      if guess.match($guess_validation_re)
+      if guess.match(@guess_validation_re)
         keep_going = false
       else
         print "Type your guesses as #{POSITIONS} letters where each letter is the first letter of a color."
@@ -142,16 +148,20 @@ end
 class Game
   def self.play_game
     CodeSetter.set_code
-    round = 0 # TODO Loop will go here - placeholder
-    GameBoard.display_board
-    guess = convert_code(CodeBreaker.guess)
-    feedback = CodeSetter.check_code(guess)
-    # GameBoard.update_board(round, guess, feedback) # TODO next step - implement update board.
+    TURNS.times do |i|
+      turn = i
+      GameBoard.display_board
+      guess = convert_code(CodeBreaker.guess)
+      feedback = CodeSetter.check_code(guess)
+      #TODO if feedback is all correct - break out of loop and victory message.
+      GameBoard.update_board(turn, guess, feedback)
+    end
+    # TODO on the last turn, display the board and end of game message.
   end
 
   def self.convert_code(str)
     # Converts a letter code of pieces to array of indexes e.g. "RGBR" -> [1, 2, 3, 1]
-    str.split("").map { |c| GUESS_PIECES.find_index { |piece| piece[1] == c } }
+    str.split('').map { |c| GUESS_PIECES.find_index { |piece| piece[1] == c } }
   end
 end
 

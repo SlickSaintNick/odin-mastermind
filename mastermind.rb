@@ -5,7 +5,7 @@
 # to the game state arrays, and a letter value.
 
 # The GUESS_PIECE letter value is used for player input - e.g. to choose:
-#   "RED RED GREEN BLUE" type "rrgb" or "RRGB".
+# "RED RED GREEN BLUE" type "rrgb" or "RRGB".
 
 TURNS = 12
 POSITIONS = 4
@@ -30,10 +30,15 @@ class GameBoard
   @board_guess = Array.new(TURNS) { Array.new(POSITIONS, 0) }
   @board_feedback = Array.new(TURNS) { Array.new(POSITIONS, 0) }
 
-  def self.display_board
-    # Print the code placeholder
+  def self.display_board(reveal_code=false, code=nil)
+    # Print the code box
     print '              '
-    print "❔❔❔❔\n\n"
+    if reveal_code
+      POSITIONS.times { |i| print GUESS_PIECES[code[i]][0] }
+      print "\n\n"
+    else
+      print "❔❔❔❔\n\n"
+    end
     # Print the rows
     TURNS.times do |i|
       if 11 - i < 9
@@ -51,9 +56,9 @@ class GameBoard
       end
       print "\n"
     end
-    # Print a reminder of the options.
-    puts "\n🔴 RED    🔵 BLUE   🟡 YELLOW"
-    puts '🟢 GREEN  ⚪ WHITE  🟣 PURPLE'
+    # Print the list of options.
+    puts "\n🔴 Red    🔵 Blue   🟡 Yellow"
+    puts '🟢 Green  ⚪ White  🟣 Purple'
   end
 
   def self.update_board(turn, guess, feedback)
@@ -66,9 +71,24 @@ class GameBoard
       @board_feedback[11 - turn][i] = number
     end
   end
+
+  def self.clear_board
+    @board_guess.replace(Array.new(TURNS) { Array.new(POSITIONS, 0) })
+    @board_feedback.replace(Array.new(TURNS) { Array.new(POSITIONS, 0) })
+  end
+
 end
 
 class ScoreBoard
+  def self.display_stats
+    Gem.win_platform? ? (system 'cls') : (system 'clear')
+    # TODO add the stats and the display method.
+
+  end
+
+  def self.update_stats(turns)
+    # TODO add the update stats method.
+  end
 end
 
 class Player
@@ -86,7 +106,8 @@ class CodeSetter < Player
     POSITIONS.times do
       @code.push((rand * (GUESS_PIECES.length - 1)).floor + 1)
     end
-    p @code
+    p @code # TODO remove at end.
+    @code
   end
 
   def self.check_code(guess)
@@ -147,15 +168,22 @@ end
 
 class Game
   def self.play_game
-    CodeSetter.set_code
+    code = CodeSetter.set_code
     TURNS.times do |i|
       turn = i
-      GameBoard.display_board
+      ScoreBoard.display_stats
+      GameBoard.display_board(true, code)
       guess = convert_code(CodeBreaker.guess)
       feedback = CodeSetter.check_code(guess)
-      #TODO if feedback is all correct - break out of loop and victory message.
       GameBoard.update_board(turn, guess, feedback)
+      if feedback.uniq == [2]
+        game_won(i + 1, code)
+        return 'CodeSetter'
+      end
     end
+    puts 'Out of turns!'
+    Kernel.exit unless play_again?
+    'CodeBreaker'
     # TODO on the last turn, display the board and end of game message.
   end
 
@@ -163,6 +191,22 @@ class Game
     # Converts a letter code of pieces to array of indexes e.g. "RGBR" -> [1, 2, 3, 1]
     str.split('').map { |c| GUESS_PIECES.find_index { |piece| piece[1] == c } }
   end
+
+  def self.game_won(turns, code)
+    # ScoreBoard.update_stats(turns)
+    ScoreBoard.display_stats
+    GameBoard.display_board(true, code)
+    puts "\nCorrect guess!"
+    Kernel.exit unless play_again?
+  end
+
+  def self.play_again?
+    GameBoard.clear_board
+    puts "Press Enter to play again or type 'exit' to quit."
+    true unless gets.chomp.upcase.strip == 'EXIT'
+  end
 end
 
-Game.play_game
+loop do
+  Game.play_game
+end

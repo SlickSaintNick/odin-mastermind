@@ -29,22 +29,21 @@ Board:
 ROUNDS: 4       AVG:    6.4
 TOTAL:  25      BEST:   5
 
-                  +----------
-                  |❔ ❔ ❔ ❔
-                  +----------
-     12           |          
-     11           |          
-     10           |          
-     9            |          
-     8            |          
-     7            |          
-     6            |          
-     5            |          
-     4            |          
-     3            |          
-     2            |          
-     1  🔳🔳🔲➖|🟢🟢🟢🟢
-    +----------+----------+
+
+                ❔ ❔ ❔ ❔
+                  
+  12           |          
+  11           |          
+  10           |          
+   9           |          
+   8           |          
+   7           |          
+   6           |          
+   5           |          
+   4           |          
+   3           |          
+   2           |          
+   1 🔳🔳🔲➖|🟢🟢🟢🟢
     
 🔴 RED    🔵 BLUE   🟤 BROWN
 🟢 GREEN  ⚪ WHITE  🟣 PURPLE 
@@ -58,12 +57,12 @@ TOTAL:  25      BEST:   5
 
 PSEUDOCODE (human player vs. computer)
 Init random computer sequence of 4 colours
-Init empty board (2D array 12 * 8)
+Init empty board (2 2D arrays, 12 * 4)
 While playing:
     12 times:
         Display stats
         Display board
-        Prompt for input (they input using numbers).
+        Prompt for input (they input using first letter of each colour).
             Quit if 'exit'
         Check player input against correct sequence
         If correct
@@ -82,6 +81,17 @@ While playing:
 End loop
 
 
+Simple description of the steps (this will be the play_game method):
+
+- CodeSetter sets a code
+- 12 times:
+  - CodeBreaker guesses a code
+  - CodeSetter gives feedback on code
+  - GameBoard is updated with guess and feedback
+  - If the guess is right the game is over.
+- End
+- Update score.
+
 Objects / Methods required:
 
 Game
@@ -92,10 +102,10 @@ Game
       players
 
 GameBoard
-   @state
+   @state_guess
+   @state_feedback
    def init_board
    def update_board
-   def analyze_move
 
 ScoreBoard
    @round
@@ -114,7 +124,7 @@ CodeSetter < Player
    def feedback_code
    
 CodeBreaker < Player
-
+    def guess
 
 Goals:
 - Working for a single round
@@ -122,3 +132,4 @@ Goals:
    - Display game board
    - Player guess
    - Feedback on player guess
+   - Update board with player guess and feedback

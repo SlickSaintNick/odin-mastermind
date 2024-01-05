@@ -167,19 +167,14 @@ class CodeBreaker
 
   def guess
     # Get user input
-    keep_going = true
-    while keep_going
+    loop do
       print "\n>> "
       guess = gets.chomp.upcase.strip
       Kernel.exit if guess == 'EXIT'
-      guess = guess.slice(0, POSITIONS)
-      if guess.match(@guess_validation_re)
-        keep_going = false
-      else
-        print "Type your guesses as #{POSITIONS} letters where each letter is the first letter of a color."
-      end
+      return guess if guess.slice(0, POSITIONS).match(@guess_validation_re)
+
+      print "Type your guesses as #{POSITIONS} letters where each letter is the first letter of a color."
     end
-    guess
   end
 end
 
@@ -214,7 +209,7 @@ class Game
     'CodeBreaker'
   end
 
-  def refresh_display(reveal_code=true) # TODO change back to false after debugging
+  def refresh_display(reveal_code: true) # TODO change back to false after debugging
     display_title
     @score_board.display_stats
     @game_board.display_board(reveal_code, @code_setter.code)
@@ -238,7 +233,7 @@ class Game
 
   def play_again?
     @game_board.clear_board
-    puts "Press Enter to play again or type 'exit' to quit."
+    print "Press Enter to play again or type 'exit' to quit.\n\n>> "
     true unless gets.chomp.upcase.strip == 'EXIT'
   end
 

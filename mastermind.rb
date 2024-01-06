@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# TODO - implement that if it is a computer guesser, the human sets the code.
+# For emoji characters, PIECE_TYPE = 0. For no emojis, PIECE_TYPE = 1
+PIECE_TYPE = 0
 
 # Initialize the length and complexity of the game.
 # Game pieces have a print value, an index in the array which corresponds
@@ -48,7 +49,7 @@ class GameBoard
   def display_code_box(reveal_code, code)
     print '              '
     if reveal_code
-      POSITIONS.times { |i| print "#{GUESS_PIECES[code[i]][0]} " }
+      POSITIONS.times { |i| print "#{GUESS_PIECES[code[i]][PIECE_TYPE]} " }
       print "\n\n"
     else
       print "❔ ❔ ❔ ❔\n\n"
@@ -64,11 +65,11 @@ class GameBoard
       end
       print "#{TURNS - i} "
       POSITIONS.times do |j|
-        print FEEDBACK_PIECES[@board_feedback[i][j]][0]
+        print FEEDBACK_PIECES[@board_feedback[i][j]][PIECE_TYPE]
       end
       print '|'
       POSITIONS.times do |j|
-        print GUESS_PIECES[@board_guess[i][j]][0]
+        print GUESS_PIECES[@board_guess[i][j]][PIECE_TYPE]
         print ' '
       end
       print "\n"
@@ -117,20 +118,8 @@ class ScoreBoard
 end
 
 class CodeSetter
-  # Purpose: Set the code and check guesses, providing feedback.
-  attr_reader :code
-
   def initialize
     @code = []
-  end
-
-  def set_code
-    # Set the code of length POSITIONS, as an array of random numbers. E.g. [3, 2, 5, 5]
-    @code = []
-    POSITIONS.times do
-      @code.push((rand * (GUESS_PIECES.length - 1)).floor + 1)
-    end
-    @code
   end
 
   def check_code(guess, code = @code)
@@ -162,6 +151,56 @@ class CodeSetter
     guess_copy.each { |number| feedback.push(0) if number != 0 }
 
     feedback
+  end
+end
+
+class CodeSetterComputer < CodeSetter
+  # Purpose: Set the code and check guesses, providing feedback.
+  attr_reader :code
+
+  def set_code
+    # Set the code of length POSITIONS, as an array of random numbers. E.g. [3, 2, 5, 5]
+    @code = []
+    POSITIONS.times do
+      @code.push((rand * (GUESS_PIECES.length - 1)).floor + 1)
+    end
+    @code
+  end
+end
+
+class CodeSetterHuman < CodeSetter
+  attr_reader :code
+
+  def initialize
+    # Build a regex expression to test valid input.
+    @guess_validation_re = '['
+    GUESS_PIECES.each { |piece| @guess_validation_re += piece[1] }
+    @guess_validation_re += "]{#{POSITIONS}}"
+  end
+
+  def set_code()
+    # Display the (hard-coded) list of options.
+    puts "CODE COLOUR OPTIONS:\n\n"
+    puts '🔴 Red    🔵 Blue   🟡 Yellow'
+    puts '🟢 Green  ⚪ White  🟣 Purple'
+    puts "\nType your #{POSITIONS}-color code as the first letter of each color.\n"
+    puts "E.g. for 🔴⚪🔵🔴 type >> RWBR\n\n"
+
+    loop do
+      print "Your code >> "
+      input = gets.chomp.upcase.strip
+      Kernel.exit if input == 'EXIT'
+      if input.slice(0, POSITIONS).match(@guess_validation_re)
+        @code = convert_code(input.slice(0, POSITIONS))
+        return @code
+      end
+      puts "Type your code as #{POSITIONS} letters where each letter is the first letter of a color."
+    end
+  end
+
+  def convert_code(str)
+    # Converts a letter code sequence of pieces to array of indexes e.g. "RGBR" -> [1, 2, 3, 1]
+    str.split('').map { |c| GUESS_PIECES.find_index { |piece| piece[1] == c } }
   end
 end
 
@@ -230,7 +269,7 @@ class CodeBreakerComputer
     # We now have a list of all possible codes. Display them...
     display_viable_codes(viable_codes)
 
-    # Return a random viable guess.
+    # Return a random viable code.
     print "\nPress Enter for next computer guess >> "
     gets
     viable_codes.sample
@@ -253,13 +292,37 @@ class CodeBreakerComputer
     count = viable_codes.length
     if count > 20
       puts "\nThere are #{count} viable guesses. The first 20 are:"
-      print "#{viable_codes.slice(0, 20)}..."
+      20.times do |i|
+        POSITIONS.times do |j|
+          print GUESS_PIECES[viable_codes[i][j]][PIECE_TYPE]
+        end
+        if i < 19
+          print ', '
+        else
+          print '...'
+        end
+        if (i + 1) % 5 == 0
+          print "\n"
+        end
+      end
     elsif count > 1
       puts "\nThere are #{count} viable guesses. They are:"
-      print viable_codes.slice(0, count)
+      count.times do |i|
+        POSITIONS.times do |j|
+          print GUESS_PIECES[viable_codes[i][j]][PIECE_TYPE]
+        end
+        if i < count - 1
+          print ', '
+        end
+        if (i + 1) % 5 == 0
+          print "\n"
+        end
+      end
     else
       puts "\nThere is 1 viable guess:"
-      print viable_codes[0]
+      POSITIONS.times do |j|
+        print GUESS_PIECES[viable_codes[0][j]][PIECE_TYPE]
+      end
     end
   end
 end
@@ -267,18 +330,21 @@ end
 class Game
   # Purpose: Control the flow of the game, determine the result.
 
-  def initialize(code_breaker = 'human')
+  def initialize(code_breaker_or_setter = 'breaker')
     @game_board = GameBoard.new
     @score_board = ScoreBoard.new
-    @code_setter = CodeSetter.new
-    if code_breaker == 'human'
+    if code_breaker_or_setter == 'breaker'
       @code_breaker = CodeBreakerHuman.new
-    elsif code_breaker == 'computer'
+      @code_setter = CodeSetterComputer.new
+    elsif code_breaker_or_setter == 'setter'
       @code_breaker = CodeBreakerComputer.new
+      @code_setter = CodeSetterHuman.new
     end
   end
 
   def play_game
+    refresh_display
+    display_title
     @code_setter.set_code
 
     # Main game loop.
@@ -335,22 +401,22 @@ ___  ___          _             ___  ____           _
     puts "\n\n"
   end
 
-  def self.code_breaker_type
-    puts 'Human   -  Human Code Breaker'
-    puts 'Computer - Computer Code Breaker'
-    puts 'Exit   -   Exit'
+  def self.code_breaker_or_setter
+    puts 'Setter - You set the code'
+    puts 'Breaker - You break the code'
+    puts 'Exit'
     loop do
       print "\n>> "
       input = gets.chomp.downcase.strip
       Kernel.exit if input == 'exit'
-      return 'human' if input.slice(0) == 'h'
+      return 'setter' if input.slice(0) == 's'
 
-      return 'computer' if input.slice(0) == 'c'
+      return 'breaker' if input.slice(0) == 'b'
     end
   end
 end
 
-game = Game.new(Game.code_breaker_type)
+game = Game.new(Game.code_breaker_or_setter)
 
 loop do
   game.play_game

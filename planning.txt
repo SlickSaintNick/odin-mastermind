@@ -26,8 +26,8 @@ Planning:
 
 Board:
 ...........................
-ROUNDS: 4       AVG:    6.4
-TOTAL:  25      BEST:   5
+ROUNDS: 4       CORRECT: 3
+SCORE:  25      BEST:    5
 
 
                 ❔ ❔ ❔ ❔
@@ -133,3 +133,52 @@ Goals:
    - Player guess
    - Feedback on player guess
    - Update board with player guess and feedback
+
+Part 2 - computer player.
+
+I will deliberately avoid researching this as I will quickly find optimal
+algorithms defeating the purpose.
+
+Two thoughts. One is... there are...
+6^4 i.e. 1296 different combinations.
+Each guess must whittle these down significantly.
+For example
+ - Once all four colours are known it is only 4! i.e. 24 possibilities.
+ - If two colours are eliminated by e.g. RRGG no pegs, now only 256 possibilities.
+ - From a computer perspective it should be trivial to 'run' all possibilities through the guess matrix, obtaining a much smaller group of possibilities. I could brute force it in a super-computery way by doing this algorithm:
+    - Completely random guess 1.
+    - Guess 2 and onwards: build a matrix of all options meeting this condition:
+        - Pegs in guess 1, 2, 3... could arise from this arrangement.
+        - Random guess from those options.
+
+The hard part there is 'this specific feedback could arise from this arrangement'.
+
+Try an example:
+RRGG gets WW--
+So there MUST BE either two+ reds, two+ greens, or a red and green. Any combination that doesn't have one of those is out.
+Look at combination RYYB.
+The guess and combination work in tandem. We sort of have two arrays going:
+colours
+[]
+positions
+[]
+
+Example:
+BW-- RRGG   [2+R OR 2+G OR RG]      []
+---- GGBB   [2R, no G, no B]        [R in 1 or 2. R in 3 or 4.]
+---- RWRW   [2R, no G, B, W]        [R in 1 and 4]
+BB-- RYYR   [2R, 2P]                [R P P R]
+
+B--- RRGG   [1R OR 1G]              [R1 or R2 or G3 or G4]
+BBW- GBBB   [1R OR 1G, 2B or 3B]    [same]
+BW-- BBBR   [1G 2B, no R]           [? G B B]
+BBWW WGBB   [W G B B]               [G must be in 3 or 4.
+                                    W is not in 1]
+WWWW BGBW                           Here I am just guessing!
+? B G GB
+
+So it's possibly just passing it through a filter.
+If this was the correct guess - could it lead to this combo?
+This combo? This combo? If it passes all of them, then it goes in.
+
+--->>> In the end I decided to use the brute force method.
